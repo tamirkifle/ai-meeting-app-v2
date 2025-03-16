@@ -7,3 +7,9 @@ sounddevice
 scipy
 wave
 librosa
+transformers
+torch
+torchaudio
+onnx
+textblob
+nltk

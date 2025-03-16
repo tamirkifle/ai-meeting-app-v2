@@ -1,0 +1,9 @@
+{
+  "name": "live-meeting-transcription",
+  "version": "1.0.0",
+  "description": "Chrome extension for real-time meeting transcription",
+  "dependencies": {
+    "@lmstudio/sdk": "^0.4.2",
+    "@lmstudio/lms-isomorphic": "^0.4.2"
+  }
+} 
