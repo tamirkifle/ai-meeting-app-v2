@@ -1,51 +1,434 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Meeting Transcription</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            width: 300px;
-            padding: 10px;
-            text-align: center;
+        :root {
+            --primary-color: #2196F3;
+            --success-color: #4CAF50;
+            --error-color: #dc3545;
+            --border-color: #e0e0e0;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --bg-primary: #fff;
+            --bg-secondary: #f8f9fa;
         }
-        #transcription {
-            height: 200px;
-            overflow-y: auto;
-            border: 1px solid #ccc;
-            padding: 5px;
-            background: #f9f9f9;
-            text-align: left;
+        body {
+            width: 800px;
+            padding: 16px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-primary);
+            margin: 0;
+            color: var(--text-primary);
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            max-width: 100%;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        .control-panel {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .text-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            min-height: 300px;
+        }
+        .transcription-container, .summary-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            height: 100%;
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 4px;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .section-title .material-icons {
+            font-size: 18px;
+            color: var(--text-secondary);
+        }
+        .text-box {
+            flex: 1;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            background: var(--bg-primary);
             font-size: 14px;
+            line-height: 1.5;
+            color: var(--text-primary);
+            overflow-y: auto;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .summary-box {
+            background: var(--bg-secondary);
         }
         button {
-            width: 100%;
-            padding: 10px;
-            margin-top: 10px;
+            padding: 8px 14px;
             border: none;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            height: 32px;
         }
-        #startBtn { background: #4CAF50; color: white; }
-        #stopBtn { background: #f44336; color: white; display: none; }
-        #loadingIndicator {
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .start-btn {
+            background: var(--success-color);
+            color: white;
+            padding: 8px 16px;
+        }
+        .feature-btn {
+            background: var(--primary-color);
+            color: white;
+        }
+        .action-btn {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 6px 12px;
+            height: 32px;
+        }
+        .action-btn:hover {
+            background: #f1f1f1;
+        }
+        .button-group {
+            display: flex;
+            gap: 6px;
+        }
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color);
+        }
+        .meeting-stats {
+            display: flex;
+            gap: 16px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .notification {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            padding: 8px 16px;
+            background: var(--text-primary);
+            color: white;
+            border-radius: 6px;
             display: none;
-            margin-top: 10px;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            z-index: 1000;
+            font-size: 13px;
+        }
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            padding: 4px 10px;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ccc;
+        }
+        .status-dot.active {
+            background: var(--success-color);
+            animation: pulse 2s infinite;
+        }
+        
+        /* Settings Modal */
+        .settings-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .settings-content {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 16px;
+            width: 320px;
+            max-width: 90%;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+        }
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .settings-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .settings-close {
+            cursor: pointer;
+            padding: 4px;
+        }
+        .settings-section {
+            margin-bottom: 16px;
+        }
+        .settings-section h3 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        .settings-option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 0;
+        }
+        .settings-option label {
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+
+        @keyframes dots {
+            0%, 20% { content: "."; }
+            40% { content: ".."; }
+            60% { content: "..."; }
+            80%, 100% { content: "...."; }
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #999;
+        }
+
+        .loading-indicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 16px;
+            border-radius: 8px;
+            z-index: 1000;
+            font-size: 13px;
+        }
+
+        .loading-spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
         }
     </style>
 </head>
 <body>
+    <div class="container">
+        <div class="header">
+            <h1>Live Meeting Transcription</h1>
+            <div class="control-panel">
+                <div class="status-indicator">
+                    <div id="statusDot" class="status-dot"></div>
+                    <span id="statusText">Ready</span>
+                </div>
+                <button id="startTranscription" class="start-btn">
+                    <span class="material-icons">mic</span>
+                    Start Transcription
+                </button>
+                <button id="settingsBtn" class="action-btn">
+                    <span class="material-icons">settings</span>
+                    Settings
+                </button>
+            </div>
+        </div>
 
-    <h2>Live Meeting Transcription</h2>
-    <div id="transcription">Click "Start" to begin capturing audio.</div>
-    <div id="loadingIndicator"></div>
+        <div class="text-section">
+            <div class="transcription-container">
+                <div class="section-header">
+                    <div class="section-title">
+                        <span class="material-icons">record_voice_over</span>
+                        Transcription
+                    </div>
+                    <div class="button-group">
+                        <button id="copyTranscript" class="action-btn">
+                            <span class="material-icons">content_copy</span>
+                            Copy
+                        </button>
+                    </div>
+                </div>
+                <div id="transcriptionContent" class="text-box">
+                    Click "Start Transcription" to begin capturing audio.
+                </div>
+            </div>
 
-    <button id="startBtn">Start Transcription</button>
-    <button id="stopBtn">Stop Transcription</button>
+            <div class="summary-container">
+                <div class="section-header">
+                    <div class="section-title">
+                        <span class="material-icons">summarize</span>
+                        Summary
+                    </div>
+                    <div class="button-group">
+                        <button id="generateSummary" class="feature-btn">
+                            <span class="material-icons">auto_awesome</span>
+                            Generate
+                        </button>
+                        <button id="editBtn" class="action-btn">
+                            <span class="material-icons">edit</span>
+                            Edit
+                        </button>
+                        <button id="copySummary" class="action-btn">
+                            <span class="material-icons">content_copy</span>
+                            Copy
+                        </button>
+                    </div>
+                </div>
+                <div id="summaryContent" class="text-box summary-box">
+                    Summary will appear here after generation.
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div class="meeting-stats">
+                <div class="stat-item">
+                    <span class="material-icons">schedule</span>
+                    <span id="duration">Duration: 0:00</span>
+                </div>
+                <div class="stat-item">
+                    <span class="material-icons">format_list_numbered</span>
+                    <span id="wordCount">Words: 0</span>
+                </div>
+            </div>
+            <button id="exportBtn" class="action-btn">
+                <span class="material-icons">download</span>
+                Export
+            </button>
+        </div>
+    </div>
+
+    <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+        <div class="loading-spinner"></div>
+        <span>Processing...</span>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <div id="settingsModal" class="settings-modal">
+        <div class="settings-content">
+            <div class="settings-header">
+                <div class="settings-title">Settings</div>
+                <span id="closeSettings" class="material-icons settings-close">close</span>
+            </div>
+            <div class="settings-section">
+                <h3>Audio Source</h3>
+                <div class="settings-option">
+                    <label>Prefer Tab Audio</label>
+                    <input type="checkbox" id="preferTabAudio" checked>
+                </div>
+                <div class="settings-option">
+                    <label>Enable Noise Reduction</label>
+                    <input type="checkbox" id="noiseReduction" checked>
+                </div>
+            </div>
+            <div class="settings-section">
+                <h3>Transcription</h3>
+                <div class="settings-option">
+                    <label>Auto-generate Summary</label>
+                    <input type="checkbox" id="autoSummary">
+                </div>
+                <div class="settings-option">
+                    <label>Show Word Count</label>
+                    <input type="checkbox" id="showWordCount" checked>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="popup.js"></script>
-
 </body>
 </html>
