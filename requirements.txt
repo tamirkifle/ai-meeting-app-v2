@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+websockets
+onnxruntime
+numpy
+sounddevice
+scipy
+wave
+librosa
